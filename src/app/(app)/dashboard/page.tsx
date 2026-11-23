@@ -130,7 +130,8 @@ export default function Dashboard() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/sign-in"); // redirect after sign out
+          router.push("/");
+          router.refresh();
         },
         onError(ctx) {
           console.error("Sign out error:", ctx.error);

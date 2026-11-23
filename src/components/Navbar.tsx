@@ -3,10 +3,23 @@ import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { User } from "better-auth";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const { data: session } = authClient.useSession()
+  const router = useRouter()
   const user: User = session?.user as User
+
+  const handleLogout = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/")
+          router.refresh()
+        },
+      },
+    })
+  }
 
   return (
     <nav className="p-4 md:p-6 shadow-md">
@@ -21,7 +34,7 @@ export default function Navbar() {
                 <span className="mr-4">
                   Welcome, {user?.email}
                 </span>
-                <Button className="w-full md:w-auto" onClick={() => authClient.signOut()}>Logout</Button>
+                <Button className="w-full md:w-auto" onClick={handleLogout}>Logout</Button>
               </>
             ) : (
               <Link href={'/sign-in'}>

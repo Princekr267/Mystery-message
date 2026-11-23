@@ -32,7 +32,8 @@ export const auth = betterAuth({
   account: {                        // ← add this block
     accountLinking: {
       enabled: true,
-      trustedProviders: ["google"]  // ← move here
+      trustedProviders: ["google"],
+      requireLocalEmailVerified: false
     }
   }
 });

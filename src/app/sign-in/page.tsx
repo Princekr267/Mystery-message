@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 import { toast, Toaster } from "sonner"
@@ -24,6 +24,12 @@ const SignInPage = () => {
 
     const [isSubmitting, setIsSubmitting] = useState(false)
     const router = useRouter()
+
+    useEffect(() => {
+        fetch("/api/seed-demo-users", { method: "POST" }).catch(() => {
+            // Demo credentials are optional and do not block sign-in.
+        })
+    }, [])
 
     // zod implementation
     const form = useForm<z.infer<typeof signInSchema>>({
@@ -167,6 +173,28 @@ const SignInPage = () => {
                             Sign Up
                         </Link>
                     </p>
+                </div>
+                <div className="mx-1 mt-6 mb-2 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                    <p className="mb-3 text-sm font-semibold text-gray-700">Demo accounts</p>
+                    <div className="space-y-2">
+                        {[
+                            { email: "user1@gmail.com", password: "12345678" },
+                            { email: "test@test.com", password: "asdfghjkl" },
+                        ].map((account) => (
+                            <button
+                                key={account.email}
+                                type="button"
+                                onClick={() => {
+                                    form.setValue("identifier", account.email)
+                                    form.setValue("password", account.password)
+                                }}
+                                className="flex w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-left text-sm hover:border-gray-300 hover:bg-gray-100"
+                            >
+                                <span className="font-medium">{account.email}</span>
+                                <span className="text-gray-500">{account.password}</span>
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

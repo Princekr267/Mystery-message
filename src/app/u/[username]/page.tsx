@@ -16,6 +16,8 @@ function Page() {
   // useState is allowed here because this is a normal (non-async) component
   const [message, setMessage] = useState<string>('')
   const [isSending, setIsSending] = useState(false)
+  const [suggestedMessages, setSuggestedMessages] = useState<string[]>(["What's a hobby you've recently started?", "If you could have dinner with any historical figure, who would it be?", "What's a simple thing that makes you happy?"])
+  const [isSuggesting, setIsSuggesting] = useState(false)
 
   const sendMessage = async () => {
     const content = message.trim()
@@ -42,6 +44,23 @@ function Page() {
     }
   }
 
+  const suggestMessage = async () => {
+    setIsSuggesting(true)
+    try {
+      const response = await axios.post<{ questions: string }>("/api/suggest-messages")
+      const questions = response.data.questions
+        .split("||")
+        .map((question) => question.trim())
+        .filter(Boolean)
+      setSuggestedMessages(questions)
+    } catch (error) {
+      const axiosError = error as AxiosError<{ error?: string }>
+      toast.error(axiosError.response?.data.error || "Failed to suggest messages")
+    } finally {
+      setIsSuggesting(false)
+    }
+  }
+
   return (
     <div className='container mx-auto my-10 max-w-2xl p-6 bg-white rounded-lg shadow-md space-y-8'>
       <div className='text-center space-y-4'>
@@ -63,14 +82,26 @@ function Page() {
 
       <div className='border-t border-gray-200 pt-6 space-y-4 text-center'>
         <h3 className='text-gray-700 font-medium'>Click on any message below to select it.</h3>
-        <Button variant="outline" className='mb-2'>Suggest new Messages</Button>
+        <Button variant="outline" className='mb-2' onClick={suggestMessage} disabled={isSuggesting}>
+          {isSuggesting ? <Loader2 className='h-4 w-4 animate-spin' /> : 'Suggest new Messages'}
+        </Button>
 
         <div className='max-w-lg mx-auto text-left space-y-3'>
           <h2 className='font-semibold text-lg text-gray-800 text-center'>Suggested Messages</h2>
           <div className='grid gap-2.5'>
-            <p  className='p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150'>Message 1</p>
+            {suggestedMessages.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => setMessage(suggestion)}
+                className='w-full p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150 text-left'
+              >
+                {suggestion}
+              </button>
+            ))}
+            {/* <p  className='p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150'>Message 1</p>
             <p className='p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150'>Message 2</p>
-            <p className='p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150'>Message 3</p>
+            <p className='p-3 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-100 cursor-pointer transition-all duration-150'>Message 3</p> */}
           </div>
         </div>
       </div>

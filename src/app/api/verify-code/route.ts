@@ -1,5 +1,6 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
+import mongoose from "mongoose";
 
 export async function POST(request: Request){
     await dbConnect()
@@ -27,6 +28,11 @@ export async function POST(request: Request){
         if(isCodeValid && isCodeNotExpired){
             user.isVerified = true
             await user.save()
+
+            await mongoose.connection.db?.collection("user").updateOne(
+                { email: user.email },
+                { $set: { emailVerified: true } }
+            )
 
             return Response.json({
                 success: true,

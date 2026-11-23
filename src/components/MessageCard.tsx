@@ -98,7 +98,7 @@ function MessageCard({message, onMessageDelete}:MessageCardProps) {
           </AlertDialog>
         </CardAction>
       </CardHeader>
-      <CardFooter className="mt-4 px-4 py-3">
+      <CardFooter className="mt-auto px-4 py-3">
         <CardDescription>{formatted}, {time}</CardDescription>
       </CardFooter>
     </Card>

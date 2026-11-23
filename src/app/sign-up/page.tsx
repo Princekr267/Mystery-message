@@ -33,10 +33,14 @@ const SignUpPage = () => {
 
     const googleSignIn = async () => {
         try {
-            await authClient.signIn.social({
+            const res = await authClient.signIn.social({
                 provider: "google",
                 callbackURL: "/dashboard"
             })
+            if (res?.error) {
+                console.error("Google sign up error", res.error)
+                toast.error(res.error.message || "Google Sign-In failed")
+            }
         } catch (err) {
             console.error("Google sign up error", err)
             toast.error("Google Sign-In failed")

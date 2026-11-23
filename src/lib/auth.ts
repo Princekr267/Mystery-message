@@ -19,8 +19,28 @@ export const auth = betterAuth({
       verifyCodeExpiry: { type: "date", required: false }
     }
   },
-  baseURL: process.env.BETTER_AUTH_URL, 
-    socialProviders: {
+  baseURL: process.env.BETTER_AUTH_URL?.replace(/\/$/, ""), 
+  trustedOrigins: async (request?: Request) => {
+    const list = [
+      "http://localhost:3000",
+      ...(process.env.BETTER_AUTH_URL ? [process.env.BETTER_AUTH_URL.replace(/\/$/, "")] : []),
+      ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+      ...(process.env.VERCEL_PROJECT_PRODUCTION_URL ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`] : []),
+      "https://*.vercel.app",
+    ];
+    if (request) {
+      const origin = request.headers.get("origin");
+      if (origin) list.push(origin);
+      const referer = request.headers.get("referer");
+      if (referer) {
+        try {
+          list.push(new URL(referer).origin);
+        } catch {}
+      }
+    }
+    return list;
+  },
+  socialProviders: {
         google: { 
             clientId: process.env.GOOGLE_CLIENT_ID as string, 
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string, 

@@ -115,7 +115,7 @@ export default function Dashboard() {
     return <div>Please Login</div>
   }
 
-  const username = session.user.name
+  const username = (session.user as any).username || session.user.name
   const baseUrl = `${window.location.protocol}//${window.location.host}`
   const profileUrl = `${baseUrl}/u/${username}`
 

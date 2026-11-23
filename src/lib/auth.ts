@@ -5,6 +5,21 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 const client = new MongoClient(`${process.env.MONGODB_URI}`);
 const db = client.db();
 
+const getBaseURL = () => {
+  if (process.env.NODE_ENV === "production") {
+    if (process.env.BETTER_AUTH_URL && !process.env.BETTER_AUTH_URL.includes("localhost")) {
+      return process.env.BETTER_AUTH_URL.replace(/\/$/, "");
+    }
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+    }
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+  }
+  return process.env.BETTER_AUTH_URL?.replace(/\/$/, "") || "http://localhost:3000";
+};
+
 export const auth = betterAuth({
   database: mongodbAdapter(db, {
     // Optional: if you don't provide a client, database transactions won't be enabled.
@@ -19,7 +34,7 @@ export const auth = betterAuth({
       verifyCodeExpiry: { type: "date", required: false }
     }
   },
-  baseURL: process.env.BETTER_AUTH_URL?.replace(/\/$/, ""), 
+  baseURL: getBaseURL(), 
   trustedOrigins: async (request?: Request) => {
     const list = [
       "http://localhost:3000",

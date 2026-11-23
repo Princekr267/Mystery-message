@@ -10,6 +10,7 @@ export async function POST(request: Request){
     try{
         await dbConnect();
         const {username, email, password} = await request.json()
+        console.log(username, password)
         let emailDeliveryFailed = false
         const existingUserVerifiedByUsername = await UserModel.findOne({
             username,
@@ -24,51 +25,44 @@ export async function POST(request: Request){
         }
 
         const existingUserByEmail = await UserModel.findOne({email})
-        const verifyCode = Math.floor(100000 + Math.random() * 900000).toString()
+        if (existingUserByEmail && existingUserByEmail.isVerified) {
+            return Response.json({
+                success: false,
+                message: "User already exist with this email"
+            }, {status: 400})
+        }
 
-        if(existingUserByEmail) {
-            if(existingUserByEmail.isVerified){
-                return Response.json({
-                    success: false,
-                    message: "User already exist with this email"
-                }, {status: 400})
-            } else {
-                const hashedPassword = await bcrypt.hash(password, 10)
-                existingUserByEmail.password = hashedPassword;
-                existingUserByEmail.verifyCode = verifyCode;
-                existingUserByEmail.verifyCodeExpiry = new Date(Date.now() + 3600000)
-                await existingUserByEmail.save()
-                try {
-                    await auth.api.signUpEmail({ body: { email, password, name: username } })
-                } catch(e) {
-                    const err = e as { body?: { code?: string } };
-                    console.log("Better Auth error:", JSON.stringify(err))
-                    if (err?.body?.code !== "USER_ALREADY_EXISTS") throw e
+        try {
+            await auth.api.signUpEmail({
+                body: {
+                    email,
+                    password,
+                    name: username,
+                    username,
                 }
-            }
-        } else {
-            const hashedPassword = await bcrypt.hash(password, 10)
-            const expiryDate = new Date()
-            expiryDate.setHours(expiryDate.getHours()+1)
-            
-            const newUser = new UserModel({
-                username,
-                email,
-                password: hashedPassword,
-                verifyCode,
-                verifyCodeExpiry: expiryDate,
-                isVerified: false,
-                isAcceptingMessage: true,
-                message: []
             })
-            await newUser.save()
-            try {
-                await auth.api.signUpEmail({ body: { email, password, name: username } })
-            } catch(e) {
-                const err = e as { body?: { code?: string } };
-                console.log("Better Auth error:", JSON.stringify(err))
-                if (err?.body?.code !== "USER_ALREADY_EXISTS") throw e
+        } catch(e) {
+            const err = e as { body?: { code?: string } };
+            console.log("Better Auth error:", JSON.stringify(err))
+            if (err?.body?.code !== "USER_ALREADY_EXISTS" && err?.body?.code !== "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL") throw e
+        }
+
+        const verifyCode = Math.floor(100000 + Math.random() * 900000).toString()
+        const expiryDate = new Date(Date.now() + 3600000)
+
+        const userDoc = await UserModel.findOne({ email })
+        if (userDoc) {
+            userDoc.username = username;
+            userDoc.verifyCode = verifyCode;
+            userDoc.verifyCodeExpiry = expiryDate;
+            userDoc.isVerified = false;
+            userDoc.isAcceptingMessage = true;
+            if (!userDoc.message) {
+                userDoc.message = [];
             }
+            await userDoc.save()
+        } else {
+            throw new Error("User record could not be found after registration")
         }
 
         // send verrification email

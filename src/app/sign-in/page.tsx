@@ -10,10 +10,10 @@ import { authClient } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
+    Field,
+    FieldError,
+    FieldGroup,
+    FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
@@ -23,23 +23,52 @@ import { signInSchema } from "@/schemas/signInSchema"
 const SignInPage = () => {
 
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const router =  useRouter()
+    const router = useRouter()
 
     // zod implementation
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
         defaultValues: {
             identifier: "",
-            password: "", 
-            
+            password: "",
+
         }
     })
+
+    const googleSignIn = async () => {
+        try {
+            await authClient.signIn.social({
+                provider: "google",
+                callbackURL: "/dashboard"
+            })
+        } catch (err) {
+            console.error("Google sign in error", err)
+            toast.error("Google Sign-In failed")
+        }
+    }
 
     const onSubmit = async (formData: z.infer<typeof signInSchema>) => {
         setIsSubmitting(true)
         try {
+            let email = formData.identifier
+            if (!email.includes("@")) {
+                const res = await fetch("/api/resolve-identifier", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ identifier: formData.identifier })
+                })
+                const data = await res.json()
+                if (res.ok && data.email) {
+                    email = data.email
+                } else {
+                    toast.error(data.error ?? "User not found")
+                    setIsSubmitting(false)
+                    return
+                }
+            }
+
             const { error } = await authClient.signIn.email({
-                email: formData.identifier,
+                email,
                 password: formData.password,
                 callbackURL: "/dashboard",
                 rememberMe: false,
@@ -63,65 +92,84 @@ const SignInPage = () => {
         <div className="flex justify-center items-center min-h-screen bg-gray-100">
             <Toaster />
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
-            <div className="text-center">
-                <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">Join Mystery Message</h1>
-                <p className="mb-4">Sign In to start your anonymous adventure</p>
-            </div>
-            <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
-                <FieldGroup>
-                    <Controller
-                        name="identifier"
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="email">Email</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="email"
-                                    aria-invalid={fieldState.invalid}
-                                    placeholder="Enter your email"
-                                />
-                                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                            </Field>
-                        )}
-                    />
-                    <Controller
-                        name="password"
-                        control={form.control}
-                        render={({ field, fieldState }) => (
-                            <Field data-invalid={fieldState.invalid}>
-                                <FieldLabel htmlFor="password">Password</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="password"
-                                    aria-invalid={fieldState.invalid}
-                                    placeholder="Enter password"
-                                    autoComplete="current-password"
-                                />
-                                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                            </Field>
-                        )}
-                    />
-                </FieldGroup>
-                <div className="flex justify-end">
-                    <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? (
-                        <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
-                        </>) : ("Sign In")}
-                    </Button>
+                <div className="text-center">
+                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">Join Mystery Message</h1>
+                    <p className="mb-4">Sign In to start your anonymous adventure</p>
                 </div>
-            </form>
-            <div className="text-center mt-4">
-                <p>
-                    Register yourself!{' '}
-                    <Link href="/sign-up" className="text-blue-600 hover:text-blue-800">
-                        Sign Up
-                    </Link>
-                </p>
+                <Button 
+                    type="button" 
+                    variant="outline" 
+                    className="w-full py-5 flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
+                    onClick={googleSignIn}
+                >
+                    <svg className="w-5 h-5" viewBox="0 0 48 48">
+                        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                        <path fill="#4285F4" d="M46.5 24c0-1.61-.15-3.16-.42-4.69H24v9.09h12.64c-.55 2.88-2.18 5.33-4.64 6.99l7.19 5.57C43.4 36.33 46.5 30.82 46.5 24z"/>
+                        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.19-5.57c-1.99 1.34-4.55 2.13-7.7 2.13-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                        <path fill="#FBBC05" d="M10.54 28.84c-.48-1.44-.76-2.97-.76-4.84s.28-3.4.76-4.84L2.56 13.03C.92 16.33 0 20.06 0 24s.92 7.67 2.56 10.97l7.98-6.13z"/>
+                    </svg>
+                    Sign In with Google
+                </Button>
+                <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-gray-300"></div>
+                    <span className="flex-shrink mx-4 text-gray-400 text-sm">or</span>
+                    <div className="flex-grow border-t border-gray-300"></div>
+                </div>
+                <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+                    <FieldGroup>
+                        <Controller
+                            name="identifier"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="email">Email</FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id="email"
+                                        aria-invalid={fieldState.invalid}
+                                        placeholder="Enter your email"
+                                    />
+                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                </Field>
+                            )}
+                        />
+                        <Controller
+                            name="password"
+                            control={form.control}
+                            render={({ field, fieldState }) => (
+                                <Field data-invalid={fieldState.invalid}>
+                                    <FieldLabel htmlFor="password">Password</FieldLabel>
+                                    <Input
+                                        {...field}
+                                        id="password"
+                                        aria-invalid={fieldState.invalid}
+                                        placeholder="Enter password"
+                                        autoComplete="current-password"
+                                    />
+                                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                                </Field>
+                            )}
+                        />
+                    </FieldGroup>
+                    <div className="flex justify-end">
+                        <Button type="submit" disabled={isSubmitting}>
+                            {isSubmitting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
+                                </>) : ("Sign In")}
+                        </Button>
+                    </div>
+                </form>
+                <div className="text-center mt-4">
+                    <p>
+                        Register yourself!{' '}
+                        <Link href="/sign-up" className="text-blue-600 hover:text-blue-800">
+                            Sign Up
+                        </Link>
+                    </p>
+                </div>
             </div>
-            </div>
-            
+
         </div>
     )
 }

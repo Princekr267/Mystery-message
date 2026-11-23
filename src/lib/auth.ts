@@ -10,6 +10,15 @@ export const auth = betterAuth({
     // Optional: if you don't provide a client, database transactions won't be enabled.
     
   }),
+  user: {
+    additionalFields: {
+      username: { type: "string", required: false },
+      isVerified: { type: "boolean", required: false },
+      isAcceptingMessage: { type: "boolean", required: false },
+      verifyCode: { type: "string", required: false },
+      verifyCodeExpiry: { type: "date", required: false }
+    }
+  },
   baseURL: process.env.BETTER_AUTH_URL, 
     socialProviders: {
         google: { 

@@ -1,12 +1,33 @@
-import { getSessionCookie } from "better-auth/cookies";
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/user.model";
 import { Message } from "@/model/user.model";
+import { MessageSchema } from "@/schemas/messageSchema";
 
 export async function POST(request: Request){
     await dbConnect()
 
-    const {username, content} = await request.json()
+    const body = await request.json()
+    if (typeof body?.username !== "string" || body.username.trim().length === 0) {
+        return Response.json({
+            success: false,
+            message: "Username is required"
+        }, {
+            status: 400
+        })
+    }
+
+    const parsed = MessageSchema.safeParse(body)
+    if (!parsed.success) {
+        return Response.json({
+            success: false,
+            message: parsed.error.issues[0]?.message || "Invalid message"
+        }, {
+            status: 400
+        })
+    }
+
+    const {username} = body
+    const {content} = parsed.data
     try{
         const user = await UserModel.findOne({username})
         if(!user) {

@@ -18,11 +18,11 @@ const MessageSchema: Schema<Message> = new Schema({
 })
 
 export interface User extends Document{
-    username: string;
+    username?: string;
     email: string;
-    password: string;
-    verifyCode: string;
-    verifyCodeExpiry: Date;
+    password?: string;
+    verifyCode?: string;
+    verifyCodeExpiry?: Date;
     isVerified: boolean;
     isAcceptingMessage: boolean;
     message: Message[];
@@ -32,8 +32,9 @@ export interface User extends Document{
 const UserSchema: Schema<User> = new Schema({
     username: {
         type: String,
-        required: [true, "Username is required"],
-        unique: true
+        required: false,
+        unique: true,
+        sparse: true
     },
     email: {
         type: String,
@@ -43,15 +44,15 @@ const UserSchema: Schema<User> = new Schema({
     },
     password: {
         type: String,
-        required: [true, "Password is required"]
+        required: false
     },
     verifyCode: {
         type: String,
-        required: [true, "Verify code is required"]
+        required: false
     },
     verifyCodeExpiry: {
         type: Date, 
-        required: [true, "Verify code Expiry is required"]
+        required: false
     },
     isVerified: {
         type: Boolean,
@@ -62,8 +63,11 @@ const UserSchema: Schema<User> = new Schema({
         default: true
     },
     message: [MessageSchema]
-})
+}, { collection: "user" })
 
-const UserModel = (mongoose.models.User as mongoose.Model<User>) || mongoose.model<User>("User", UserSchema)
+if (mongoose.models && mongoose.models.User) {
+    delete mongoose.models.User;
+}
+const UserModel = mongoose.model<User>("User", UserSchema);
 
 export default UserModel;

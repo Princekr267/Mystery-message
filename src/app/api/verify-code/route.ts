@@ -5,11 +5,12 @@ export async function POST(request: Request){
     await dbConnect()
     try {
         const {username, code} = await request.json()
-
+        console.log("Verify Email code", code);
         const decodedUsername = decodeURIComponent(username)
         const user =  await UserModel.findOne({
             username: decodedUsername
         })
+        console.log(user);
 
         if(!user){
             return Response.json({
@@ -21,7 +22,7 @@ export async function POST(request: Request){
         }
 
         const isCodeValid = user.verifyCode === code
-        const isCodeNotExpired = new Date(user.verifyCodeExpiry) > new Date()
+        const isCodeNotExpired = user.verifyCodeExpiry ? new Date(user.verifyCodeExpiry) > new Date() : false
 
         if(isCodeValid && isCodeNotExpired){
             user.isVerified = true

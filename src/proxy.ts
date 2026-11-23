@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { getSessionCookie } from 'better-auth/cookies'
-// This function can be marked `async` if using `await` inside
-export function proxy(request: NextRequest) {
 
+export function proxy(request: NextRequest) {
   const session = getSessionCookie(request)
 
   const isProtected = request.nextUrl.pathname.startsWith("/dashboard");
-
   const isAuthPage = ["/sign-in", "/sign-up", "/verify", "/"].includes(request.nextUrl.pathname)
 
   // Not logged in → redirect to sign-in

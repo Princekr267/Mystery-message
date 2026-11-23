@@ -1,10 +1,8 @@
 'use client'
-import React from 'react'
 
 import {
   Card,
   CardAction,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -36,40 +34,74 @@ type MessageCardProps ={
 function MessageCard({message, onMessageDelete}:MessageCardProps) {
 
     const handleDeleteConfirm = async () => {
-        const response = await axios.delete<ApiResponse>(`/api/delete-message/${message._id}`)
-        toast.success(response.data.message)
-        onMessageDelete(message._id.toString())
+        try {
+            const response = await axios.delete<ApiResponse>(`/api/delete-message/${message._id}`)
+            toast.success(response.data.message)
+            onMessageDelete(message._id.toString())
+        } catch {
+            toast.error("Failed to delete message")
+        }
     }
-    
+
+    // console.log(message.createdAt);
+    const datetime = message.createdAt;
+    const dateOG = new Date(datetime)
+    const formatted = dateOG.toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+
+    const time = new Date(datetime).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+    });
 
   return (
-    <div>
-        <Card>
-            <CardHeader>
-                <CardTitle>Card Title</CardTitle>
-                <AlertDialog>
-                    <AlertDialogTrigger render={<Button variant="destructive"><X className='w-5 h-5' /></Button>} />
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
-                            account from our servers.
-                        </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDeleteConfirm}>Continue</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-                <CardDescription>Card Description</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <p>Card Content</p>
-            </CardContent>
-        </Card>
-    </div>
+    <Card className="h-full">
+      <CardHeader className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 px-4 pb-0">
+        <CardTitle className="min-w-0 break-words pr-1 text-xl font-semibold leading-7">
+          {message.content}
+        </CardTitle>
+        <CardAction>
+          <AlertDialog>
+            <AlertDialogTrigger
+              render={
+                <Button
+                  variant="destructive"
+                  size="icon-sm"
+                  aria-label="Delete message"
+                  className="rounded-md"
+                >
+                  <X />
+                </Button>
+              }
+            />
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this message?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  variant="destructive"
+                  onClick={handleDeleteConfirm}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardAction>
+      </CardHeader>
+      <CardFooter className="mt-4 px-4 py-3">
+        <CardDescription>{formatted}, {time}</CardDescription>
+      </CardFooter>
+    </Card>
   )
 }
 

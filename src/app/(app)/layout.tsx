@@ -7,7 +7,7 @@ export default function AppLayout({
 }>){
   return (
     <>
-      <Navbar />
+      
       {children}
     </>
   );

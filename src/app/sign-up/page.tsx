@@ -21,6 +21,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Loader2 } from "lucide-react"
 import Link from "next/link"
+import { authClient } from "@/lib/auth-client"
 
 const SignUpPage = () => {
     const [username, setUsername] = useState('')
@@ -29,6 +30,18 @@ const SignUpPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false)
     const debounced = useDebounceCallback(setUsername, 400)
     const router =  useRouter()
+
+    const googleSignIn = async () => {
+        try {
+            await authClient.signIn.social({
+                provider: "google",
+                callbackURL: "/dashboard"
+            })
+        } catch (err) {
+            console.error("Google sign up error", err)
+            toast.error("Google Sign-In failed")
+        }
+    }
 
     // zod implementation
     const form = useForm<z.infer<typeof signUpSchema>>({
@@ -87,6 +100,25 @@ const SignUpPage = () => {
                 <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">Join Mystery Message</h1>
                 <p className="mb-4">Sign up to start your anonymous adventure</p>
             </div>
+            <Button 
+                type="button" 
+                variant="outline" 
+                className="w-full py-5 flex items-center justify-center gap-2 border border-gray-300 hover:bg-gray-50"
+                onClick={googleSignIn}
+            >
+                <svg className="w-5 h-5" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.5 24c0-1.61-.15-3.16-.42-4.69H24v9.09h12.64c-.55 2.88-2.18 5.33-4.64 6.99l7.19 5.57C43.4 36.33 46.5 30.82 46.5 24z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.19-5.57c-1.99 1.34-4.55 2.13-7.7 2.13-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="#FBBC05" d="M10.54 28.84c-.48-1.44-.76-2.97-.76-4.84s.28-3.4.76-4.84L2.56 13.03C.92 16.33 0 20.06 0 24s.92 7.67 2.56 10.97l7.98-6.13z"/>
+                </svg>
+                Sign Up with Google
+            </Button>
+            <div className="relative flex py-2 items-center">
+                <div className="flex-grow border-t border-gray-300"></div>
+                <span className="flex-shrink mx-4 text-gray-400 text-sm">or</span>
+                <div className="flex-grow border-t border-gray-300"></div>
+            </div>
             <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
                 <FieldGroup>
                     <Controller
@@ -95,24 +127,34 @@ const SignUpPage = () => {
                         render={({ field, fieldState }) => (
                             <Field data-invalid={fieldState.invalid}>
                                 <FieldLabel htmlFor="username">Username</FieldLabel>
-                                <Input
-                                    {...field}
-                                    id="username"
-                                    aria-invalid={fieldState.invalid}
-                                    placeholder="Username"
-                                    autoComplete="off"
-                                    onChange={(e) => {
-                                        field.onChange(e)
-                                        debounced(e.target.value)
-                                    }}
-                                />
-                                {isCheckingUsername && <Loader2 className="animate-spin" />}
-                                <p className={`text-sm ${usernameMessage === "Username is unique" ? "text-green-500" : "text-red-500"}`}>
-                                    test {usernameMessage}
-                                </p>
-                                <div className="mt-2 text-sm text-muted-foreground">
-                                    {isCheckingUsername ? "Checking username availability..." : usernameMessage}
+                                <div className="relative w-full">
+                                    <Input
+                                        {...field}
+                                        id="username"
+                                        aria-invalid={fieldState.invalid}
+                                        placeholder="Username"
+                                        autoComplete="off"
+                                        className="pr-8"
+                                        onChange={(e) => {
+                                            field.onChange(e)
+                                            debounced(e.target.value)
+                                        }}
+                                    />
+                                    {isCheckingUsername && (
+                                        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center">
+                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                        </div>
+                                    )}
                                 </div>
+                                {isCheckingUsername ? (
+                                    <p className="text-xs mt-1 text-muted-foreground">Checking username availability...</p>
+                                ) : (
+                                    usernameMessage && (
+                                        <p className={`text-xs mt-1 ${usernameMessage === "Username is unique" ? "text-green-500" : "text-red-500"}`}>
+                                            {usernameMessage}
+                                        </p>
+                                    )
+                                )}
                                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                             </Field>
                         )}

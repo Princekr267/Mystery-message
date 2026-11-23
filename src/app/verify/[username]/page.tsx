@@ -17,6 +17,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { Button } from '@/components/ui/button'
 
 
 function VerifyAccount() {
@@ -25,7 +26,10 @@ function VerifyAccount() {
     
 
     const form = useForm<z.infer<typeof verifySchema>>({
-        resolver: zodResolver(verifySchema)
+        resolver: zodResolver(verifySchema),
+        defaultValues: {
+            code: ""
+        }
     })
 
     const onSubmit = async (data: z.infer<typeof verifySchema>) => {
@@ -37,11 +41,12 @@ function VerifyAccount() {
             toast.success("Success", {
                 description: response.data.message
             })
+            router.push('/sign-in')
         } catch (err) {
             console.error("Error in signup of user", err)
             const axiosError = err as AxiosError<ApiResponse>;
             const errorMessage = axiosError.response?.data.message
-            toast.error(errorMessage ?? "Signup failed")
+            toast.error(errorMessage ?? "Verification failed")
         }
     }
 
@@ -71,6 +76,7 @@ function VerifyAccount() {
                     </Field>
                 )}
                 />
+                <Button type='submit'>Submit</Button>
             </form>
         </div>
  

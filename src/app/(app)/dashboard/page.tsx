@@ -85,6 +85,16 @@ export default function Dashboard() {
     fetchAcceptMessage()
   }, [session, setValue, fetchAcceptMessage, fetchMessages])
 
+  useEffect(() => {
+    if(!session?.user) return
+
+    const intervalId = window.setInterval(() => {
+      fetchMessages()
+    }, 10000)
+
+    return () => window.clearInterval(intervalId)
+  }, [session, fetchMessages])
+
   //handle switch change
   const handleSwitchChange = async() => {
     try {

@@ -29,7 +29,14 @@ export async function POST(request: Request){
     const {username} = body
     const {content} = parsed.data
     try{
-        const user = await UserModel.findOne({username})
+        const escaped = username.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const regex = new RegExp(`^${escaped}$`, 'i')
+        const user = await UserModel.findOne({
+            $or: [
+                { username: regex },
+                { name: regex }
+            ]
+        })
         if(!user) {
             return Response.json({
                 success: false,
@@ -38,7 +45,7 @@ export async function POST(request: Request){
                 status: 404
             })
         }
-        if(!user.isAcceptingMessage){
+        if(user.isAcceptingMessage === false){
             return Response.json({
                 success: false,
                 message: "User is not accepting messages"
@@ -48,6 +55,9 @@ export async function POST(request: Request){
         }
 
         const newMessage = {content, createdAt: new Date()}
+        if(!user.message){
+            user.message = []
+        }
         user.message.push(newMessage as Message)
         await user.save()
 

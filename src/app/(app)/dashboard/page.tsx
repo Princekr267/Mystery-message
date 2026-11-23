@@ -115,9 +115,9 @@ export default function Dashboard() {
     return <div>Please Login</div>
   }
 
-  const username = (session.user as any).username || session.user.name
+  const username = (session.user as any).username || session.user.name || session.user.email?.split('@')[0] || "user"
   const baseUrl = `${window.location.protocol}//${window.location.host}`
-  const profileUrl = `${baseUrl}/u/${username}`
+  const profileUrl = `${baseUrl}/u/${encodeURIComponent(username)}`
 
   const copyToClipboart = () => {
     navigator.clipboard.writeText(profileUrl)

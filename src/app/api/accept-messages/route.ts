@@ -71,11 +71,16 @@ export async function GET(request: Request) {
                 message: "User not found"
             }, {status: 404})
         }
+
+        if (foundUser.isAcceptingMessage === undefined) {
+            foundUser.isAcceptingMessage = true
+            await foundUser.save()
+        }
          
         return Response.json({
             success: true,
-            isAcceptingMessages: foundUser.isAcceptingMessage
-            }, {status: 200})
+            isAcceptingMessages: foundUser.isAcceptingMessage ?? true
+        }, {status: 200})
         }
     catch(err){
         console.log("Error in getting message acceptance status")

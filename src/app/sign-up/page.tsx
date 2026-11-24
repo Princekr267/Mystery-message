@@ -188,6 +188,7 @@ const SignUpPage = () => {
                                 <Input
                                     {...field}
                                     id="password"
+                                    type="password"
                                     aria-invalid={fieldState.invalid}
                                     placeholder="Enter password"
                                     autoComplete="new-password"
